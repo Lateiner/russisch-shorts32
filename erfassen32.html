@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple-Choice Quiz: Закон подлости</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-box {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .answers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .answer-option {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            padding: 16px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-align: left;
+            width: 100%;
+            outline: none;
+        }
+
+        .answer-option:not(.disabled):hover {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+            transform: translateY(-1px);
+        }
+
+        .answer-option.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f0;
+            color: #14532d;
+        }
+
+        .answer-option.wrong {
+            border-color: var(--error-color);
+            background-color: #fdedec;
+            color: #781c1c;
+        }
+
+        .answer-option.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .answer-option.disabled.correct, 
+        .answer-option.disabled.wrong {
+            opacity: 1;
+        }
+
+        .feedback-zone {
+            text-align: center;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .feedback-message.success { color: var(--success-color); }
+        .feedback-message.error { color: var(--error-color); }
+
+        .btn-action {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .btn-action:hover { background-color: #2c3e50; }
+        .btn-action:active { transform: scale(0.98); }
+        
+        .btn-action.next-btn { background-color: var(--primary-color); }
+        .btn-action.next-btn:hover { background-color: #357abd; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .question-box { font-size: 1.05rem; padding: 15px; }
+            .answer-option { padding: 14px 16px; font-size: 0.95rem; }
+            .btn-action { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Russisch-Quiz</h2>
+    
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <span id="progress-text">Frage 1 von 3</span>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="question-box" id="question-text">
+            <!-- Wird dynamisch befüllt -->
+        </div>
+
+        <div class="answers-list" id="answers-container">
+            <!-- Wird dynamisch befüllt -->
+        </div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-action" id="action-btn"></button>
+    </div>
+</div>
+
+<script>
+    // Der Fragen-Pool (Alle 3 Aspekte der Anleitung abgedeckt)
+    const quizData = [
+        {
+            question: "Was bedeutet der Ausdruck „Закон подлости“ am ehesten?",
+            options: [
+                { text: "Ein Gesetz gegen Kriminalität.", isCorrect: false },
+                { text: "Wenn etwas schiefgehen kann, geht es auch schief.", isCorrect: true },
+                { text: "Ein physikalisches Grundgesetz.", isCorrect: false }
+            ],
+            tip: "Das entspricht im Deutschen genau Murphys Gesetz."
+        },
+        {
+            question: "In welcher Situation verwendet man diesen Ausdruck passenderweise?",
+            options: [
+                { text: "Wenn man im Lotto gewonnen hat.", isCorrect: false },
+                { text: "Wenn man eine neue Sprache erfolgreich gelernt hat.", isCorrect: false },
+                { text: "Wenn im blödesten Moment alles unerwartet schiefgeht.", isCorrect: true }
+            ],
+            tip: "Es beschreibt die Tücke des Schicksals, wenn sich die Umstände gegen einen verschwören."
+        },
+        {
+            question: "Ergänze den typischen Ausruf aus dem Picknick-Beispiel: „..., это закон подлости!“",
+            options: [
+                { text: "Блин", isCorrect: true },
+                { text: "Спасибо", isCorrect: false },
+                { text: "Пожалуйста", isCorrect: false }
+            ],
+            tip: "Gesucht ist ein umgangssprachliches russisches Wort für „Mist!“ oder „Verdammt!“."
+        }
+    ];
+
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    const questionText = document.getElementById('question-text');
+    const answersContainer = document.getElementById('answers-container');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const actionBtn = document.getElementById('action-btn');
+    const progressFill = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const quizUi = document.getElementById('quiz-ui');
+
+    // Startet oder setzt das gesamte Quiz zurück
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        
+        // Fragen kopieren und die Reihenfolge der Fragen mischen
+        currentQuestions = [...quizData];
+        for (let i = currentQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentQuestions[i], currentQuestions[j]] = [currentQuestions[j], currentQuestions[i]];
+        }
+
+        quizUi.style.display = 'block';
+        showQuestion();
+    }
+
+    // Zeigt die aktuelle Frage an
+    function showQuestion() {
+        hasAnswered = false;
+        feedbackMsg.style.display = 'none';
+        feedbackMsg.className = 'feedback-message';
+        actionBtn.style.display = 'none';
+        answersContainer.innerHTML = '';
+
+        // Fortschritt aktualisieren
+        const total = currentQuestions.length;
+        const currentNum = currentQuestionIndex + 1;
+        const percent = (currentQuestionIndex / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `Frage ${currentNum} von ${total}`;
+
+        const currentQuestion = currentQuestions[currentQuestionIndex];
+        questionText.innerText = currentQuestion.question;
+
+        // Antworten mischen
+        const shuffledOptions = [...currentQuestion.options];
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+        }
+
+        // Antwortbuttons erstellen
+        shuffledOptions.forEach(option => {
+            const button = document.createElement('button');
+            button.className = 'answer-option';
+            button.innerText = option.text;
+            button.addEventListener('click', () => handleSelection(button, option.isCorrect));
+            answersContainer.appendChild(button);
+        });
+    }
+
+    // Wertet das Auswählen einer Antwort aus
+    function handleSelection(selectedButton, isCorrect) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+
+        const allButtons = answersContainer.querySelectorAll('.answer-option');
+        allButtons.forEach(btn => btn.classList.add('disabled'));
+
+        const currentQuestion = currentQuestions[currentQuestionIndex];
+
+        if (isCorrect) {
+            selectedButton.classList.add('correct');
+            feedbackMsg.innerText = "🎉 Richtig! " + currentQuestion.tip;
+            feedbackMsg.classList.add('success');
+            score++;
+        } else {
+            selectedButton.classList.add('wrong');
+            feedbackMsg.innerText = "❌ Leider nicht ganz richtig. " + currentQuestion.tip;
+            feedbackMsg.classList.add('error');
+
+            // Richtige Antwort aufdecken
+            allButtons.forEach(btn => {
+                const optData = currentQuestion.options.find(o => o.text === btn.innerText);
+                if (optData && optData.isCorrect) btn.classList.add('correct');
+            });
+        }
+
+        feedbackMsg.style.display = 'block';
+
+        // Button-Zustand für "Weiter" konfigurieren
+        if (currentQuestionIndex < currentQuestions.length - 1) {
+            actionBtn.innerText = "Nächste Frage";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = () => {
+                currentQuestionIndex++;
+                showQuestion();
+            };
+        } else {
+            // Letzte Frage beantwortet -> zur Endauswertung
+            actionBtn.innerText = "Zur Auswertung";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = showFinalScore;
+        }
+        actionBtn.style.display = 'inline-block';
+    }
+
+    // Zeigt das Endergebnis des Schülers an
+    function showFinalScore() {
+        quizUi.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.innerText = "Beendet";
+
+        feedbackMsg.className = 'feedback-message success';
+        feedbackMsg.innerHTML = `🏁 Quiz abgeschlossen!<br>Du hast <strong>${score} von ${currentQuestions.length}</strong> Fragen richtig beantwortet.`;
+        feedbackMsg.style.display = 'block';
+
+        actionBtn.innerText = "Quiz neustarten";
+        actionBtn.className = "btn-action";
+        actionBtn.onclick = startQuiz;
+    }
+
+    // Quiz beim Laden starten
+    startQuiz();
+</script>
+
+</body>
+</html>
