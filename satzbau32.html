@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schüttelsatz-Quiz: Redewendungen</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .instruction {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Die Box für den bereits gebildeten Satz */
+        .solution-box {
+            background-color: #f8fafc;
+            border: 2px dashed var(--border-color);
+            min-height: 65px;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .solution-word {
+            background-color: #e2e8f0;
+            color: #1e293b;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            animation: popIn 0.2s ease-out;
+        }
+
+        /* Bereich für die durcheinandergewürfelten Wort-Buttons */
+        .scrambled-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 25px;
+            min-height: 50px;
+        }
+
+        .word-btn {
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            color: #475569;
+            padding: 10px 18px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .word-btn:hover:not(.disabled) {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+            color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        /* Direktes visuelles Feedback bei falschem Klick */
+        .word-btn.wrong-click {
+            background-color: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            color: white !important;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .word-btn.disabled {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .feedback-zone {
+            text-align: center;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .feedback-message.success { color: var(--success-color); }
+
+        .btn-action {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .btn-action:hover { background-color: #2c3e50; }
+        
+        .btn-action.next-btn { background-color: var(--primary-color); }
+        .btn-action.next-btn:hover { background-color: #357abd; }
+
+        /* Animationen */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .solution-box { min-height: 55px; padding: 10px; gap: 8px; }
+            .solution-word { font-size: 0.95rem; padding: 6px 10px; }
+            .scrambled-box { gap: 8px; }
+            .word-btn { font-size: 0.95rem; padding: 8px 14px; }
+            .btn-action { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Schüttelsatz-Spiel</h2>
+    <p class="instruction">Bringe den Satz in die richtige Reihenfolge, indem du die Wörter nacheinander anklickst.</p>
+
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <span id="progress-text">Satz 1 von 5</span>
+    </div>
+
+    <div id="game-ui">
+        <div class="solution-box" id="solution-container"></div>
+
+        <div class="scrambled-box" id="scrambled-container"></div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-action" id="action-btn"></button>
+    </div>
+</div>
+
+<script>
+    // Die 5 vorgegebenen Sätze (aufgeteilt in Arrays für die exakte Reihenfolge)
+    const sentencesPool = [
+        {
+            ordered: ["Блин,", "это", "закон", "подлости!"],
+            translation: "Mist, das ist wieder typisch Murphys Gesetz!"
+        },
+        {
+            ordered: ["Что", "значит", "выражение", "закон", "подлости?"],
+            translation: "Was bedeutet der Ausdruck „Zakon podlosti“?"
+        },
+        {
+            ordered: ["Мы", "используем", "это", "выражение", "каждый", "день."],
+            translation: "Wir verwenden diesen Ausdruck jeden Tag."
+        },
+        {
+            ordered: ["Если", "что-то", "может", "пойти", "не", "так,", "оно", "пойдёт", "не", "так."],
+            translation: "Wenn etwas schiefgehen kann, wird es schiefgehen."
+        },
+        {
+            ordered: ["Напишите", "ваше", "мнение", "в", "комментариях!"],
+            translation: "Schreibt eure Meinung in die Kommentare!"
+        }
+    ];
+
+    let currentSentences = [];
+    let currentSentenceIndex = 0;
+    let expectedWordIndex = 0;
+
+    const solutionContainer = document.getElementById('solution-container');
+    const scrambledContainer = document.getElementById('scrambled-container');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const actionBtn = document.getElementById('action-btn');
+    const progressFill = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const gameUi = document.getElementById('game-ui');
+
+    function startGame() {
+        currentSentenceIndex = 0;
+        
+        // Sätze kopieren und die Reihenfolge der 5 Runden durchmischen
+        currentSentences = [...sentencesPool];
+        for (let i = currentSentences.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentSentences[i], currentSentences[j]] = [currentSentences[j], currentSentences[i]];
+        }
+
+        gameUi.style.display = 'block';
+        loadSentence();
+    }
+
+    function loadSentence() {
+        expectedWordIndex = 0;
+        solutionContainer.innerHTML = '';
+        scrambledContainer.innerHTML = '';
+        feedbackMsg.style.display = 'none';
+        feedbackMsg.innerText = '';
+        actionBtn.style.display = 'none';
+
+        // Fortschrittsbalken steuern
+        const total = currentSentences.length;
+        const percent = (currentSentenceIndex / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `Satz ${currentSentenceIndex + 1} von ${total}`;
+
+        const activeSentence = currentSentences[currentSentenceIndex];
+        
+        // Wörter klonen und für die Anzeige mischen (Fisher-Yates)
+        const shuffledWords = [...activeSentence.ordered];
+        for (let i = shuffledWords.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
+        }
+
+        // Wort-Buttons generieren
+        shuffledWords.forEach(wordText => {
+            const btn = document.createElement('button');
+            btn.className = 'word-btn';
+            btn.innerText = wordText;
+            
+            btn.addEventListener('click', () => handleWordClick(btn, wordText));
+            scrambledContainer.appendChild(btn);
+        });
+    }
+
+    function handleWordClick(clickedButton, clickedText) {
+        const activeSentence = currentSentences[currentSentenceIndex];
+        const correctTargetText = activeSentence.ordered[expectedWordIndex];
+
+        // Direktes Feedback
+        if (clickedText === correctTargetText) {
+            // Richtiges Wort angeklickt: Ausblenden im Schüttelkasten
+            clickedButton.classList.add('disabled');
+
+            // Zum zusammengesetzten Satz hinzufügen
+            const span = document.createElement('span');
+            span.className = 'solution-word';
+            span.innerText = clickedText;
+            solutionContainer.appendChild(span);
+
+            expectedWordIndex++;
+
+            // Prüfen, ob der Satz vollständig ist
+            if (expectedWordIndex === activeSentence.ordered.length) {
+                handleSentenceComplete();
+            }
+        } else {
+            // Falsches Wort angeklickt: Direktes rotes Aufblinken
+            if (!clickedButton.classList.contains('wrong-click')) {
+                clickedButton.classList.add('wrong-click');
+                // Nach Ablauf der CSS-Schüttel-Animation wieder zurücksetzen
+                setTimeout(() => {
+                    clickedButton.classList.remove('wrong-click');
+                }, 300);
+            }
+        }
+    }
+
+    function handleSentenceComplete() {
+        const activeSentence = currentSentences[currentSentenceIndex];
+        
+        feedbackMsg.innerHTML = `🎉 Richtig!<br><small style="font-weight:normal; color:#475569;">Deutsch: „${activeSentence.translation}“</small>`;
+        feedbackMsg.className = "feedback-message success";
+        feedbackMsg.style.display = 'block';
+
+        if (currentSentenceIndex < currentSentences.length - 1) {
+            actionBtn.innerText = "Nächster Satz";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = () => {
+                currentSentenceIndex++;
+                loadSentence();
+            };
+        } else {
+            actionBtn.innerText = "Zur Auswertung";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = showFinalView;
+        }
+        actionBtn.style.display = 'inline-block';
+    }
+
+    function showFinalView() {
+        gameUi.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.innerText = "Beendet";
+
+        feedbackMsg.className = 'feedback-message success';
+        feedbackMsg.innerHTML = "🏆 <strong>Hervorragend!</strong> Du hast alle 5 Schüttelsätze fehlerfrei in die richtige Reihenfolge gebracht.";
+        feedbackMsg.style.display = 'block';
+
+        actionBtn.innerText = "Spiel neustarten";
+        actionBtn.className = "btn-action";
+        actionBtn.onclick = startGame;
+    }
+
+    // Spiel beim Laden starten
+    startGame();
+</script>
+
+</body>
+</html>
