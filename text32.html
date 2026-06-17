@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Textmarker-Aufgabe: Vokabeln erkennen</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+            --marker-color: #fef08a; /* Klassisches Textmarker-Gelb */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .instruction-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .instruction-task {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .instruction-sub {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Textbereich mit interaktiven Wörtern */
+        .text-passage {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            line-height: 2.2; /* Mehr Zeilenabstand für Touch-Bedienung */
+            color: #1e293b;
+            text-align: justify;
+            margin-bottom: 25px;
+        }
+
+        /* Jedes Wort wird zu einem berührbaren Baustein */
+        .clickable-word {
+            display: inline-block;
+            cursor: pointer;
+            padding: 0 4px;
+            margin: 0 2px;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+            user-select: none;
+            font-weight: 500;
+        }
+
+        .clickable-word:hover:not(.disabled) {
+            background-color: #e2e8f0;
+        }
+
+        /* Marker-Zustände */
+        .clickable-word.correct-marked {
+            background-color: var(--success-color) !important;
+            color: white !important;
+            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+        }
+
+        .clickable-word.wrong-marked {
+            background-color: var(--error-color) !important;
+            color: white !important;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .clickable-word.disabled {
+            cursor: not-allowed;
+        }
+
+        /* Feedback & Navigation */
+        .feedback-zone {
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+        .feedback-message.success { color: var(--success-color); }
+
+        .btn-action {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .btn-action:hover { background-color: #2c3e50; }
+        .btn-action.next-btn { background-color: var(--primary-color); }
+        .btn-action.next-btn:hover { background-color: #357abd; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .instruction-task { font-size: 1.1rem; }
+            .text-passage { font-size: 1.1rem; padding: 15px; line-height: 2.4; }
+            .clickable-word { padding: 2px 5px; margin: 0 1px; }
+            .btn-action { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Textmarker-Aufgabe</h2>
+    
+    <div class="instruction-box">
+        <div class="instruction-task" id="task-text">Markiere das russische Wort...</div>
+        <div class="instruction-sub">Tippe das gesuchte Wort direkt im Text an.</div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <span id="progress-text">Aufgabe 1 von 5</span>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="text-passage" id="text-container"></div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-action" id="action-btn"></button>
+    </div>
+</div>
+
+<script>
+    // Pool aus 5 verschiedenen Textmarker-Aufgaben
+    const tasksPool = [
+        {
+            taskPrompt: "Markiere das russische Wort für „Mist“ / „Verdammt“:",
+            // Der Satz als Array von Objekten. Jedes Wort hat eine ID. Satzzeichen kleben am Wort für den Textfluss.
+            sentence: [
+                { word: "Блин,", id: "w1", isCorrect: true },
+                { word: "я", id: "w2", isCorrect: false },
+                { word: "опоздал", id: "w3", isCorrect: false },
+                { word: "на", id: "w4", isCorrect: false },
+                { word: "автобус,", id: "w5", isCorrect: false },
+                { word: "это", id: "w6", isCorrect: false },
+                { word: "закон", id: "w7", isCorrect: false },
+                { word: "подлости!", id: "w8", isCorrect: false }
+            ],
+            explanation: "„Блин“ wird im Alltagssprachgebrauch genau wie „Mist!“ oder „Verdammt!“ als Ausruf bei Missgeschicken genutzt."
+        },
+        {
+            taskPrompt: "Markiere das russische Wort für „Gesetz“:",
+            sentence: [
+                { word: "В", id: "w1", isCorrect: false },
+                { word: "России", id: "w2", isCorrect: false },
+                { word: "все", id: "w3", isCorrect: false },
+                { word: "знают,", id: "w4", isCorrect: false },
+                { word: "что", id: "w5", isCorrect: false },
+                { word: "такое", id: "w6", isCorrect: false },
+                { word: "закон", id: "w7", isCorrect: true },
+                { word: "подлости.", id: "w8", isCorrect: false }
+            ],
+            explanation: "„Закон“ bedeutet Gesetz. Zusammen mit „подлости“ bildet es das „Gesetz der Gemeinheit“."
+        },
+        {
+            taskPrompt: "Markiere das russische Wort für „Gemeinheit“ / „Heimtücke“:",
+            sentence: [
+                { word: "Выражение", id: "w1", isCorrect: false },
+                { word: "закон", id: "w2", isCorrect: false },
+                { word: "подлости", id: "w3", isCorrect: true },
+                { word: "означает,", id: "w4", isCorrect: false },
+                { word: "что", id: "w5", isCorrect: false },
+                { word: "всё", id: "w6", isCorrect: false },
+                { word: "идёт", id: "w7", isCorrect: false },
+                { word: "не", "id": "w8", isCorrect: false },
+                { word: "так.", id: "w9", isCorrect: false }
+            ],
+            explanation: "„Подлость“ bedeutet Gemeinheit oder Niedertracht. Hier beschreibt es die Tyrannei des Schicksals."
+        },
+        {
+            taskPrompt: "Markiere das russische Wort für „Prüfung“:",
+            sentence: [
+                { word: "На", id: "w1", isCorrect: false },
+                { word: "экзамене", id: "w2", isCorrect: true },
+                { word: "мне", id: "w3", isCorrect: false },
+                { word: "попался", id: "w4", isCorrect: false },
+                { word: "самый", id: "w5", isCorrect: false },
+                { word: "трудный", id: "w6", isCorrect: false },
+                { word: "вопрос.", id: "w7", isCorrect: false }
+            ],
+            explanation: "„Экзамен“ ist das russische Wort für Prüfung (hier im Lokativ: на экзамене)."
+        },
+        {
+            taskPrompt: "Markiere das russische Wort für „Picknick“:",
+            sentence: [
+                { word: "Мы", id: "w1", isCorrect: false },
+                { word: "хотели", id: "w2", isCorrect: false },
+                { word: "устроить", id: "w3", isCorrect: false },
+                { word: "пикник,", id: "w4", isCorrect: true },
+                { word: "но", id: "w5", isCorrect: false },
+                { word: "пошёл", id: "w6", isCorrect: false },
+                { word: "дождь.", id: "w7", isCorrect: false }
+            ],
+            explanation: "„Пикник“ ist ein internationales Wort und bedeutet auch im Russischen Picknick."
+        }
+    ];
+
+    let currentTasks = [];
+    let currentIndex = 0;
+    let hasAnswered = false;
+
+    const taskText = document.getElementById('task-text');
+    const textContainer = document.getElementById('text-container');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const actionBtn = document.getElementById('action-btn');
+    const progressFill = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const quizUi = document.getElementById('quiz-ui');
+
+    function startQuiz() {
+        currentIndex = 0;
+        currentTasks = [...tasksPool];
+        
+        // Reihenfolge der 5 Aufgaben durchmischen
+        for (let i = currentTasks.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentTasks[i], currentTasks[j]] = [currentTasks[j], currentTasks[i]];
+        }
+
+        quizUi.style.display = 'block';
+        loadTask();
+    }
+
+    function loadTask() {
+        hasAnswered = false;
+        textContainer.innerHTML = '';
+        feedbackMsg.style.display = 'none';
+        feedbackMsg.innerText = '';
+        actionBtn.style.display = 'none';
+
+        // Fortschrittsbalken aktualisieren
+        const total = currentTasks.length;
+        const percent = (currentIndex / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `Aufgabe ${currentIndex + 1} von ${total}`;
+
+        const activeTask = currentTasks[currentIndex];
+        taskText.innerText = activeTask.taskPrompt;
+
+        // Satz Wort für Wort als interaktive Elemente rendern
+        activeTask.sentence.forEach(wordObj => {
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'clickable-word';
+            wordSpan.innerText = wordObj.word;
+            wordSpan.setAttribute('data-id', wordObj.id);
+            
+            wordSpan.addEventListener('click', () => handleWordClick(wordSpan, wordObj));
+            textContainer.appendChild(wordSpan);
+            
+            // Ein Leerzeichen nach jedem Wort einfügen, damit der Text normal fließt
+            textContainer.appendChild(document.createTextNode(' '));
+        });
+    }
+
+    function handleWordClick(element, data) {
+        if (hasAnswered) return;
+
+        if (data.isCorrect) {
+            hasAnswered = true;
+            element.classList.add('correct-marked');
+            
+            // Alle Wörter einfrieren
+            const allWords = textContainer.querySelectorAll('.clickable-word');
+            allWords.forEach(w => w.classList.add('disabled'));
+
+            // Feedback einblenden
+            const activeTask = currentTasks[currentIndex];
+            feedbackMsg.innerHTML = `🎉 <strong>Richtig markiert!</strong><br><span style="font-weight: normal; font-size: 0.95rem; color: #475569;">${activeTask.explanation}</span>`;
+            feedbackMsg.className = "feedback-message success";
+            feedbackMsg.style.display = 'block';
+
+            // Navigation steuern
+            if (currentIndex < currentTasks.length - 1) {
+                actionBtn.innerText = "Nächste Aufgabe";
+                actionBtn.className = "btn-action next-btn";
+                actionBtn.onclick = () => {
+                    currentIndex++;
+                    loadTask();
+                };
+            } else {
+                actionBtn.innerText = "Zur Gesamtauswertung";
+                actionBtn.className = "btn-action next-btn";
+                actionBtn.onclick = showFinalScore;
+            }
+            actionBtn.style.display = 'inline-block';
+
+        } else {
+            // Falsches Wort angeklickt: Kurzes rotes Aufblinken als Fehler-Feedback
+            if (!element.classList.contains('wrong-marked')) {
+                element.classList.add('wrong-marked');
+                setTimeout(() => {
+                    element.classList.remove('wrong-marked');
+                }, 300);
+            }
+        }
+    }
+
+    function showFinalScore() {
+        quizUi.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.innerText = "Beendet";
+
+        feedbackMsg.className = 'feedback-message success';
+        feedbackMsg.innerHTML = "🏆 <strong>Großartig!</strong> Du hast alle Vokabeln im Text fehlerfrei gefunden und richtig markiert.";
+        feedbackMsg.style.display = 'block';
+
+        actionBtn.innerText = "Quiz neustarten";
+        actionBtn.className = "btn-action";
+        actionBtn.onclick = startQuiz;
+    }
+
+    // Start beim Laden der Seite
+    startQuiz();
+</script>
+
+</body>
+</html>
