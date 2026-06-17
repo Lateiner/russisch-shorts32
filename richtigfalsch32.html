@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Richtig oder Falsch? – Закон подлости</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .statement-box {
+            background-color: #f8fafc;
+            border-top: 4px solid var(--primary-color);
+            padding: 25px 20px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            line-height: 1.6;
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .decision-zone {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn-choice {
+            flex: 1;
+            border: 2px solid var(--border-color);
+            background-color: var(--card-bg);
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-choice.true-btn:not(.disabled):hover {
+            border-color: var(--success-color);
+            background-color: #e8f8f0;
+            color: #14532d;
+        }
+
+        .btn-choice.false-btn:not(.disabled):hover {
+            border-color: var(--error-color);
+            background-color: #fdedec;
+            color: #781c1c;
+        }
+
+        .btn-choice.selected-correct {
+            background-color: var(--success-color) !important;
+            border-color: var(--success-color) !important;
+            color: white !important;
+        }
+
+        .btn-choice.selected-wrong {
+            background-color: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            color: white !important;
+        }
+
+        .btn-choice.disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+        
+        .btn-choice.disabled.selected-correct,
+        .btn-choice.disabled.selected-wrong {
+            opacity: 1;
+        }
+
+        .feedback-zone {
+            text-align: center;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .feedback-message.success { color: var(--success-color); }
+        .feedback-message.error { color: var(--error-color); }
+
+        .btn-action {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .btn-action:hover { background-color: #2c3e50; }
+        .btn-action:active { transform: scale(0.98); }
+        
+        .btn-action.next-btn { background-color: var(--primary-color); }
+        .btn-action.next-btn:hover { background-color: #357abd; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .statement-box { font-size: 1.05rem; padding: 20px 15px; }
+            .decision-zone { flex-direction: column; gap: 10px; }
+            .btn-choice { padding: 16px; font-size: 1.1rem; }
+            .btn-action { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Richtig oder Falsch?</h2>
+    
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <span id="progress-text">Aussage 1 von 3</span>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="statement-box" id="statement-text"></div>
+
+        <div class="decision-zone">
+            <button class="btn-choice true-btn" id="btn-true">Wahr</button>
+            <button class="btn-choice false-btn" id="btn-false">Falsch</button>
+        </div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-action" id="action-btn"></button>
+    </div>
+</div>
+
+<script>
+    const statementsData = [
+        {
+            text: "Man verwendet den Ausdruck „Закон подлости“, wenn man ein großes Glück beschreiben möchte.",
+            isTrue: false,
+            feedback: "Falsch! Der Ausdruck beschreibt genau das Gegenteil – nämlich wenn alles schiefgeht (Murphys Gesetz)."
+        },
+        {
+            text: "Der Ausdruck „Закон подлости“ bedeutet übersetzt so viel wie „Das Gesetz der Gemeinheit“.",
+            isTrue: true,
+            feedback: "Richtig! Es beschreibt bildhaft die „Gemeinheit“ oder Tücke des Schicksals."
+        },
+        {
+            text: "Wenn es bei einem geplanten Picknick plötzlich anfängt zu regnen, passt der russische Ausruf „Блин, это закон подлости!“ perfekt.",
+            isTrue: true,
+            feedback: "Richtig! Das ist ein klassisches Alltagsszenario für diese Redewendung."
+        }
+    ];
+
+    let currentStatements = [];
+    let currentIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    const statementText = document.getElementById('statement-text');
+    const btnTrue = document.getElementById('btn-true');
+    const btnFalse = document.getElementById('btn-false');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const actionBtn = document.getElementById('action-btn');
+    const progressFill = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const quizUi = document.getElementById('quiz-ui');
+
+    function startQuiz() {
+        currentIndex = 0;
+        score = 0;
+        
+        currentStatements = [...statementsData];
+        for (let i = currentStatements.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentStatements[i], currentStatements[j]] = [currentStatements[j], currentStatements[i]];
+        }
+
+        quizUi.style.display = 'block';
+        showStatement();
+    }
+
+    function showStatement() {
+        hasAnswered = false;
+        
+        // Feedback-Bereich und Action-Button explizit leeren und verstecken vor der neuen Aussage
+        feedbackMsg.style.display = 'none';
+        feedbackMsg.innerText = '';
+        feedbackMsg.className = 'feedback-message';
+        actionBtn.style.display = 'none';
+        
+        [btnTrue, btnFalse].forEach(btn => {
+            btn.className = btn.id === 'btn-true' ? 'btn-choice true-btn' : 'btn-choice false-btn';
+        });
+
+        const total = currentStatements.length;
+        const currentNum = currentIndex + 1;
+        const percent = (currentIndex / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `Aussage ${currentNum} von ${total}`;
+
+        statementText.innerText = currentStatements[currentIndex].text;
+    }
+
+    function handleSelection(userChoice) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+
+        const currentStatement = currentStatements[currentIndex];
+        const isCorrect = (userChoice === currentStatement.isTrue);
+
+        btnTrue.classList.add('disabled');
+        btnFalse.classList.add('disabled');
+
+        const selectedButton = userChoice ? btnTrue : btnFalse;
+
+        // Feedback-Inhalte werden erst HIER generiert und sichtbar gemacht
+        if (isCorrect) {
+            selectedButton.classList.add('selected-correct');
+            feedbackMsg.innerText = "🎉 " + currentStatement.feedback;
+            feedbackMsg.className = "feedback-message success";
+            score++;
+        } else {
+            selectedButton.classList.add('selected-wrong');
+            feedbackMsg.innerText = "❌ " + currentStatement.feedback;
+            feedbackMsg.className = "feedback-message error";
+        }
+
+        feedbackMsg.style.display = 'block';
+
+        if (currentIndex < currentStatements.length - 1) {
+            actionBtn.innerText = "Nächste Aussage";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = () => {
+                currentIndex++;
+                showStatement();
+            };
+        } else {
+            actionBtn.innerText = "Zur Auswertung";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = showFinalScore;
+        }
+        actionBtn.style.display = 'inline-block';
+    }
+
+    function showFinalScore() {
+        quizUi.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.innerText = "Beendet";
+
+        feedbackMsg.className = 'feedback-message success';
+        feedbackMsg.innerHTML = `🏁 Fertig!<br>Du hast <strong>${score} von ${currentStatements.length}</strong> Aussagen richtig eingeschätzt.`;
+        feedbackMsg.style.display = 'block';
+
+        actionBtn.innerText = "Quiz neustarten";
+        actionBtn.className = "btn-action";
+        actionBtn.onclick = startQuiz;
+    }
+
+    btnTrue.addEventListener('click', () => handleSelection(true));
+    btnFalse.addEventListener('click', () => handleSelection(false));
+
+    startQuiz();
+</script>
+
+</body>
+</html>
