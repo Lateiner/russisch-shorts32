@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Situations-Zuordnung: Закон подлости</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .instruction {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .counter-badge {
+            display: block;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        /* Responsives Grid-Layout: 3 Spalten auf Desktop, 2 auf Tablet, 1 auf Handy */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .situation-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .situation-card:not(.disabled):hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.1);
+        }
+
+        .situation-emoji {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            user-select: none;
+        }
+
+        .situation-desc {
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.4;
+            color: #475569;
+        }
+
+        /* Auswertungsklassen */
+        .situation-card.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f0;
+            pointer-events: none; /* Verhindert erneutes Anklicken */
+        }
+        .situation-card.correct .situation-desc { color: #14532d; }
+
+        .situation-card.wrong {
+            border-color: var(--error-color);
+            background-color: #fdedec;
+            pointer-events: none;
+        }
+        .situation-card.wrong .situation-desc { color: #781c1c; }
+
+        .situation-card.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .situation-card.disabled.correct { opacity: 1; }
+
+        /* Feedback-Bereich unten */
+        .feedback-zone {
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .feedback-message.success { color: var(--success-color); }
+        .feedback-message.error { color: var(--error-color); }
+
+        .btn-reset {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn-reset:hover { background-color: #2c3e50; }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 750px) {
+            .cards-grid { grid-template-columns: repeat(2, 1fr); } /* 2 Spalten auf Tablets */
+        }
+
+        @media (max-width: 550px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            
+            .cards-grid { grid-template-columns: 1fr; gap: 12px; } /* 1 Spalte auf Smartphones */
+
+            .situation-card {
+                flex-direction: row;
+                text-align: left;
+                padding: 15px;
+                justify-content: flex-start;
+                gap: 15px;
+            }
+
+            .situation-emoji { margin-bottom: 0; font-size: 2.4rem; min-width: 45px; text-align: center; }
+            .situation-desc { font-size: 0.9rem; }
+            .btn-reset { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Situations-Auswahl</h2>
+    <p class="instruction">Finde alle Situationen, auf die der Ausdruck <strong>„Закон подлости“</strong> zutrifft.<br>Es gibt insgesamt 3 richtige Szenarien.</p>
+    <span class="counter-badge" id="counter">Gefunden: 0 / 3</span>
+
+    <div class="cards-grid" id="grid-container">
+        </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-reset" id="reset-btn">Neustart</button>
+    </div>
+</div>
+
+<script>
+    // Die 6 abgedeckten Szenarien (3 korrekte Pechsträhnen, 3 unpassende)
+    const scenarios = [
+        { emoji: "🌧️", desc: "Ein geplantes Picknick im Park fällt wegen strömendem Regen aus.", isCorrect: true, tip: "Genau! Das ist die klassische Tücke des Schicksals." },
+        { emoji: "💰", desc: "Jemand gewinnt unerwartet den Hauptgewinn im Lotto.", isCorrect: false, tip: "Falsch! Das ist reines Glück, kein Gesetz der Gemeinheit." },
+        { emoji: "🛏️", desc: "Jemand schläft am Wochenende gemütlich und entspannt im Bett.", isCorrect: false, tip: "Falsch! Hier läuft alles glatt und erholsam ab." },
+        { emoji: "🚌", desc: "Genau in der Sekunde, in der man die Haltestelle erreicht, fährt der Bus weg.", isCorrect: true, tip: "Richtig! Der Bus fährt dir vor der Nase weg – absoluter Закон подлости." },
+        { emoji: "📱", desc: "Ausgerechnet beim wichtigsten Anruf des Tages stürzt das Handy ab.", isCorrect: true, tip: "Richtig! Technisches Versagen im dümmsten Moment." },
+        { emoji: "🍏", desc: "Jemand findet im Supermarkt die allerletzte, perfekt reife Avocado.", isCorrect: false, tip: "Falsch! Das ist ein kleiner Glücksmoment im Alltag." }
+    ];
+
+    const gridContainer = document.getElementById('grid-container');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const resetBtn = document.getElementById('reset-btn');
+    const counterBadge = document.getElementById('counter');
+    
+    let correctFound = 0;
+    let isGameOver = false;
+
+    function initGame() {
+        correctFound = 0;
+        isGameOver = false;
+        gridContainer.innerHTML = '';
+        feedbackMsg.style.display = 'none';
+        feedbackMsg.innerText = '';
+        counterBadge.innerText = "Gefunden: 0 / 3";
+
+        // Szenarien klonen und durchmischen (Fisher-Yates)
+        const shuffled = [...scenarios];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        // Karten rendern
+        shuffled.forEach(scene => {
+            const card = document.createElement('button');
+            card.className = 'situation-card';
+            
+            const emoji = document.createElement('div');
+            emoji.className = 'situation-emoji';
+            emoji.innerText = scene.emoji;
+
+            const desc = document.createElement('div');
+            desc.className = 'situation-desc';
+            desc.innerText = scene.desc;
+
+            card.appendChild(emoji);
+            card.appendChild(desc);
+
+            card.addEventListener('click', () => handleSelection(card, scene));
+            gridContainer.appendChild(card);
+        });
+    }
+
+    function handleSelection(card, data) {
+        if (isGameOver) return;
+
+        if (data.isCorrect) {
+            card.classList.add('correct');
+            correctFound++;
+            counterBadge.innerText = `Gefunden: ${correctFound} / 3`;
+            
+            feedbackMsg.innerText = `🎉 Richtig! ${data.tip}`;
+            feedbackMsg.className = "feedback-message success";
+            feedbackMsg.style.display = 'block';
+
+            // Prüfen, ob alle 3 richtigen gefunden wurden
+            if (correctFound === 3) {
+                isGameOver = true;
+                feedbackMsg.innerHTML = "🏆 <strong>Hervorragend!</strong> Du hast alle drei passenden Szenarien für „Закон подлости“ erfolgreich erkannt.";
+                feedbackMsg.className = "feedback-message success";
+                
+                // Alle verbleibenden unangeklickten Karten deaktivieren
+                gridContainer.querySelectorAll('.situation-card').forEach(c => c.classList.add('disabled'));
+            }
+        } else {
+            card.classList.add('wrong');
+            feedbackMsg.innerText = `❌ ${data.tip}`;
+            feedbackMsg.className = "feedback-message error";
+            feedbackMsg.style.display = 'block';
+        }
+    }
+
+    resetBtn.addEventListener('click', initGame);
+    initGame();
+</script>
+
+</body>
+</html>
