@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kategorisierungs-Spiel: Закон подлости</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+            --spalte-1-color: #e1f5fe;
+            --spalte-1-border: #03a9f4;
+            --spalte-2-color: #f3e5f5;
+            --spalte-2-border: #9c27b0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.6rem;
+            color: #0f172a;
+        }
+
+        .instruction {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        /* Fortschrittsbalken */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Karten-Spielfeld */
+        .game-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .situation-card {
+            background: #ffffff;
+            border: 3px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            box-shadow: 0 6px 15px rgba(74, 144, 226, 0.15);
+            min-height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        /* Die beiden Sortier-Spalten / Buttons */
+        .columns-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .target-column {
+            background-color: #f8fafc;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 130px;
+        }
+
+        .target-column h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .target-column p {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .target-column.col-1 {
+            border-color: var(--spalte-1-border);
+            background-color: #f0f9ff;
+        }
+        .target-column.col-1 h3 { color: #0284c7; }
+
+        .target-column.col-2 {
+            border-color: var(--spalte-2-border);
+            background-color: #fdf4ff;
+        }
+        .target-column.col-2 h3 { color: #c084fc; }
+
+        /* Hover-Effekte für Klicks */
+        .target-column:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .target-column.col-1:hover:not(.disabled) { background-color: var(--spalte-1-color); }
+        .target-column.col-2:hover:not(.disabled) { background-color: var(--spalte-2-color); }
+
+        .target-column.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Visuelles Feedback bei richtiger/falscher Zuordnung */
+        .target-column.correct-flash {
+            background-color: var(--success-color) !important;
+            border-color: var(--success-color) !important;
+        }
+        .target-column.correct-flash h3, .target-column.correct-flash p { color: white !important; }
+
+        .target-column.wrong-flash {
+            background-color: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            animation: shake 0.3s ease-in-out;
+        }
+        .target-column.wrong-flash h3, .target-column.wrong-flash p { color: white !important; }
+
+        /* Feedback Bereich */
+        .feedback-zone {
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+        .feedback-message.success { color: var(--success-color); }
+        .feedback-message.error { color: var(--error-color); }
+
+        .btn-action {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .btn-action:hover { background-color: #2c3e50; }
+        .btn-action.next-btn { background-color: var(--primary-color); }
+        .btn-action.next-btn:hover { background-color: #357abd; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            h2 { font-size: 1.3rem; }
+            .columns-container { grid-template-columns: 1fr; gap: 12px; }
+            .target-column { min-height: 90px; padding: 15px; }
+            .situation-card { font-size: 1.1rem; padding: 20px; min-height: 100px; }
+            .btn-action { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Kategorisierungs-Spiel</h2>
+    <p class="instruction">Lies die Alltagssituation auf der Karte. Klicke oder tippe auf die richtige Spalte, um sie zuzuordnen!</p>
+
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <span id="progress-text">Karte 1 von 5</span>
+    </div>
+
+    <div id="game-ui">
+        <div class="game-zone">
+            <!-- Die aktuelle Karte -->
+            <div class="situation-card" id="active-card">Lade Situation...</div>
+        </div>
+
+        <div class="columns-container">
+            <!-- Spalte 1: Закон подлости -->
+            <div class="target-column col-1" id="col-zakon">
+                <h3>Закон подлости</h3>
+                <p>(Murphys Gesetz / Pechsträhne)</p>
+            </div>
+            <!-- Spalte 2: Kein Закон подлости -->
+            <div class="target-column col-2" id="col-kein">
+                <h3>Kein Закон подлости</h3>
+                <p>(Glück oder normaler Zufall)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-action" id="action-btn"></button>
+    </div>
+</div>
+
+<script>
+    // Pool aus genau 5 Alltagssituationen
+    const itemsPool = [
+        {
+            text: "„Der Bus fährt mir genau in der Sekunde vor der Nase weg, als ich an der Haltestelle ankomme.“",
+            category: "zakon",
+            feedback: "Richtig! Ein klassischer 'Закон подлости' – das Pech schlägt im unpassendsten Moment zu."
+        },
+        {
+            text: "„Ich finde beim Spazierengehen auf der Straße einen unbeschädigten 5-Euro-Schein.“",
+            category: "kein",
+            feedback: "Richtig! Das ist einfach nur pures Glück und kein 'Закон подлости'."
+        },
+        {
+            text: "„Ich lerne fleißig 29 von 30 Fragen. In der Prüfung kommt exakt die eine Frage dran, die ich ausgelassen habe.“",
+            category: "zakon",
+            feedback: "Perfekt! Das ist das absolute Paradebeispiel für das Gesetz der Gemeinheit."
+        },
+        {
+            text: "„Ich vergesse meinen Regenschirm zu Hause und genau an diesem Tag fängt es heftig an zu regnen.“",
+            category: "zakon",
+            feedback: "Richtig! Der Klassiker: Hättest du den Schirm dabei gehabt, hätte die Sonne geschienen."
+        },
+        {
+            text: "„Der Lehrer verschiebt die angekündigte Exkursion, weil das Wetter sehr schön und sonnig ist.“",
+            category: "kein",
+            feedback: "Richtig! Das ist zwar schade, entspricht aber einer normalen organisatorischen Änderung und keinem ironischen Schicksalsschlag."
+        }
+    ];
+
+    let currentItems = [];
+    let currentIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    const activeCard = document.getElementById('active-card');
+    const colZakon = document.getElementById('col-zakon');
+    const colKein = document.getElementById('col-kein');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const actionBtn = document.getElementById('action-btn');
+    const progressFill = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const gameUi = document.getElementById('game-ui');
+
+    function startGame() {
+        currentIndex = 0;
+        score = 0;
+        currentItems = [...itemsPool];
+        
+        // Kartenreihenfolge zufällig mischen
+        for (let i = currentItems.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentItems[i], currentItems[j]] = [currentItems[j], currentItems[i]];
+        }
+
+        gameUi.style.display = 'block';
+        colZakon.classList.remove('disabled', 'correct-flash', 'wrong-flash');
+        colKein.classList.remove('disabled', 'correct-flash', 'wrong-flash');
+        loadItem();
+    }
+
+    function loadItem() {
+        hasAnswered = false;
+        feedbackMsg.style.display = 'none';
+        feedbackMsg.innerText = '';
+        actionBtn.style.display = 'none';
+
+        // Spalten-Zustände zurücksetzen
+        colZakon.className = "target-column col-1";
+        colKein.className = "target-column col-2";
+
+        // Fortschrittsanzeige
+        const total = currentItems.length;
+        const percent = (currentIndex / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `Karte ${currentIndex + 1} von ${total}`;
+
+        // Text auf die Karte legen
+        activeCard.innerText = currentItems[currentIndex].text;
+        activeCard.style.transform = "scale(1)";
+        activeCard.style.opacity = "1";
+    }
+
+    function selectCategory(chosenCategory) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+
+        const currentItem = currentItems[currentIndex];
+        const isCorrect = (chosenCategory === currentItem.category);
+
+        // Spalten einfrieren
+        colZakon.classList.add('disabled');
+        colKein.classList.add('disabled');
+
+        // Visuelles Feedback an den Spalten anzeigen
+        if (chosenCategory === 'zakon') {
+            colZakon.classList.add(isCorrect ? 'correct-flash' : 'wrong-flash');
+        } else {
+            colKein.classList.add(isCorrect ? 'correct-flash' : 'wrong-flash');
+        }
+
+        // Text-Feedback ausgeben
+        if (isCorrect) {
+            score++;
+            feedbackMsg.innerHTML = `🎉 <strong>Richtig!</strong><br><span style="font-weight:normal; font-size:0.95rem; color:#475569;">${currentItem.feedback}</span>`;
+            feedbackMsg.className = "feedback-message success";
+        } else {
+            feedbackMsg.innerHTML = `❌ <strong>Leider falsch.</strong><br><span style="font-weight:normal; font-size:0.95rem; color:#475569;">${currentItem.feedback}</span>`;
+            feedbackMsg.className = "feedback-message error";
+        }
+        feedbackMsg.style.display = 'block';
+
+        // Karte leicht animieren/ausblenden
+        activeCard.style.transform = "scale(0.95)";
+        activeCard.style.opacity = "0.8";
+
+        // Navigations-Button anzeigen
+        if (currentIndex < currentItems.length - 1) {
+            actionBtn.innerText = "Nächste Karte";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = () => {
+                currentIndex++;
+                loadItem();
+            };
+        } else {
+            actionBtn.innerText = "Zur Gesamtauswertung";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = showFinalScore;
+        }
+        actionBtn.style.display = 'inline-block';
+    }
+
+    function showFinalScore() {
+        gameUi.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.innerText = "Beendet";
+
+        feedbackMsg.className = 'feedback-message success';
+        feedbackMsg.innerHTML = `🏆 <strong>Spiel beendet!</strong><br>Du hast <strong>${score} von ${currentItems.length}</strong> Situationen korrekt einsortiert.`;
+        feedbackMsg.style.display = 'block';
+
+        actionBtn.innerText = "Spiel neustarten";
+        actionBtn.className = "btn-action";
+        actionBtn.onclick = startGame;
+    }
+
+    // Event-Listener für die Spalten-Auswahl (Klick/Touch)
+    colZakon.addEventListener('click', () => selectCategory('zakon'));
+    colKein.addEventListener('click', () => selectCategory('kein'));
+
+    // Spiel beim Laden starten
+    startGame();
+</script>
+
+</body>
+</html>
