@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktiver Abschluss: Live-Umfrage</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.6rem;
+            color: #0f172a;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .question-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .question-box h3 {
+            font-size: 1.3rem;
+            color: #0f172a;
+            margin-bottom: 20px;
+        }
+
+        /* Voting-Buttons (Groß & Touch-freundlich) */
+        .voting-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .vote-btn {
+            background: #ffffff;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            text-align: left;
+            width: 100%;
+        }
+
+        .vote-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+            transform: translateY(-1px);
+        }
+
+        .vote-btn .emoji {
+            font-size: 1.4rem;
+        }
+
+        /* Ergebnisse Ansicht (Mentimeter-Style) */
+        .results-view {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .result-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .result-labels {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .bar-container {
+            background-color: #e2e8f0;
+            height: 24px;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        /* Ergebnis-Footer für Gesamtstimmen & Reset */
+        .results-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .total-votes {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .btn-reset {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+
+        .btn-reset:hover {
+            color: var(--primary-color);
+        }
+
+        /* Kommentar-Sektion (Optional) */
+        .comment-section {
+            margin-top: 35px;
+            border-top: 2px dashed var(--border-color);
+            padding-top: 25px;
+        }
+
+        .comment-section h4 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #334155;
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .comment-input {
+            flex: 1;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .comment-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .send-btn {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: #2c3e50;
+        }
+
+        /* Live-Kommentar-Feed */
+        .comments-feed {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 5px;
+        }
+
+        .comment-bubble {
+            background-color: #f1f5f9;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .question-box h3 { font-size: 1.1rem; }
+            .vote-btn { padding: 14px; font-size: 0.95rem; }
+            .comment-form { flex-direction: column; }
+            .send-btn { padding: 12px; }
+            .results-footer { flex-direction: column; gap: 8px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Interaktives Live-Voting</h2>
+    <p class="subtitle">Teile deine Meinung anonym mit der Klasse — ohne Registrierung.</p>
+
+    <div class="question-box">
+        <h3>Kennst du das „Gesetz der Gemeinheit“ (Закон подлости) aus deinem eigenen Alltag?</h3>
+        
+        <div class="voting-options" id="vote-options-block">
+            <button class="vote-btn" onclick="castVote('oft')">
+                <span class="emoji">🤦‍♂️</span> <span>Ja, gefühlt ständig!</span>
+            </button>
+            <button class="vote-btn" onclick="castVote('selten')">
+                <span class="emoji">🤷‍♀️</span> <span>Eher selten, zum Glück.</span>
+            </button>
+            <button class="vote-btn" onclick="castVote('anders')">
+                <span class="emoji">🌍</span> <span>In meiner Muttersprache heißt das ganz anders.</span>
+            </button>
+        </div>
+
+        <div class="results-view" id="results-block">
+            <div class="result-row">
+                <div class="result-labels"><span>🤦‍♂️ Ja, ständig!</span><span id="pct-oft">0%</span></div>
+                <div class="bar-container"><div class="bar-fill" id="bar-oft" style="background-color: #e74c3c;"></div></div>
+            </div>
+            <div class="result-row">
+                <div class="result-labels"><span>🤷‍♀️ Selten</span><span id="pct-selten">0%</span></div>
+                <div class="bar-container"><div class="bar-fill" id="bar-selten" style="background-color: #3498db;"></div></div>
+            </div>
+            <div class="result-row">
+                <div class="result-labels"><span>🌍 Heißt bei mir anders</span><span id="pct-anders">0%</span></div>
+                <div class="bar-container"><div class="bar-fill" id="bar-anders" style="background-color: #9b59b6;"></div></div>
+            </div>
+            
+            <div class="results-footer">
+                <span class="total-votes" id="total-votes-text">Stimmen gesamt: 0</span>
+                <button class="btn-reset" onclick="resetVote()">Umfrage neustarten</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="comment-section">
+        <h4>Öffentliche Pinnwand (Optionaler Kommentar):</h4>
+        
+        <div class="comment-form">
+            <input type="text" class="comment-input" id="custom-comment" placeholder="Schreibe ein Beispiel auf (z.B. Bus verpasst)..." maxlength="120">
+            <button class="send-btn" onclick="submitComment()">Senden</button>
+        </div>
+
+        <div class="comments-feed" id="comments-box">
+            </div>
+    </div>
+</div>
+
+<script>
+    // Ausgangs-Datenstamm, um eine aktive Klasse zu simulieren
+    const baseVoteData = { oft: 14, selten: 5, anders: 3 };
+    let voteData = { ...baseVoteData };
+
+    const simulatedComments = [
+        "Das mit dem Toastbrot, das auf die Butterseite fällt, passiert mir JEDE Woche! 🍞",
+        "Bei uns im Arabischen sagen wir oft einfach 'Chair' (Zufall/Schicksal) dazu.",
+        "Im Englischen nennt man es einfach Murphys Law, echt cool zu wissen wie es auf Russisch heißt!",
+        "Letzten Montag: Ich lerne alles außer ein Kapitel, und genau das kam dran. Gesetz der Gemeinheit pur!"
+    ];
+
+    const voteOptionsBlock = document.getElementById('vote-options-block');
+    const resultsBlock = document.getElementById('results-block');
+    const commentsBox = document.getElementById('comments-box');
+    const customCommentInput = document.getElementById('custom-comment');
+
+    function initPoll() {
+        commentsBox.innerHTML = '';
+        
+        // Gespeicherte Stimme aus lokalem Browser-Speicher lesen
+        const previousVote = localStorage.getItem('voted_zakon_2026');
+        if (previousVote) {
+            // Wenn der Nutzer bereits abgestimmt hatte, rechnen wir seine Stimme im Live-View hinzu
+            voteData = { ...baseVoteData };
+            if (voteData[previousVote] !== undefined) {
+                voteData[previousVote]++;
+            }
+            showResults();
+        } else {
+            // Ansonsten zeige die Auswahlmöglichkeiten
+            voteOptionsBlock.style.display = 'flex';
+            resultsBlock.style.display = 'none';
+            voteData = { ...baseVoteData };
+        }
+        
+        // Vorgefertigte Beispielkommentare laden
+        simulatedComments.forEach(text => addCommentBubble(text));
+    }
+
+    function castVote(option) {
+        localStorage.setItem('voted_zakon_2026', option);
+        voteData[option]++;
+        showResults();
+    }
+
+    function showResults() {
+        voteOptionsBlock.style.display = 'none';
+        resultsBlock.style.display = 'flex';
+
+        const total = voteData.oft + voteData.selten + voteData.anders;
+        
+        const pctOft = Math.round((voteData.oft / total) * 100);
+        const pctSelten = Math.round((voteData.selten / total) * 100);
+        const pctAnders = Math.round((voteData.anders / total) * 100);
+
+        document.getElementById('pct-oft').innerText = pctOft + '%';
+        document.getElementById('pct-selten').innerText = pctSelten + '%';
+        document.getElementById('pct-anders').innerText = pctAnders + '%';
+
+        // Flüssige Balken-Animation auslösen
+        setTimeout(() => {
+            document.getElementById('bar-oft').style.width = pctOft + '%';
+            document.getElementById('bar-selten').style.width = pctSelten + '%';
+            document.getElementById('bar-anders').style.width = pctAnders + '%';
+        }, 50);
+
+        document.getElementById('total-votes-text').innerText = `Stimmen gesamt: ${total} (Live-Klassenspiegel)`;
+    }
+
+    // Die Neustart-Funktion löscht die Sperre und setzt die Anzeige zurück
+    function resetVote() {
+        localStorage.removeItem('voted_zakon_2026');
+        
+        // Balken fix auf Null setzen vor dem Wechsel, um unschöne Sprünge beim nächsten Voting zu vermeiden
+        document.getElementById('bar-oft').style.width = '0%';
+        document.getElementById('bar-selten').style.width = '0%';
+        document.getElementById('bar-anders').style.width = '0%';
+
+        initPoll();
+    }
+
+    function submitComment() {
+        const text = customCommentInput.value.trim();
+        if (text === '') return;
+
+        addCommentBubble(text, true);
+        customCommentInput.value = '';
+        commentsBox.scrollTop = 0;
+    }
+
+    function addCommentBubble(text, isOwn = false) {
+        const bubble = document.createElement('div');
+        bubble.className = 'comment-bubble';
+        
+        if (isOwn) {
+            bubble.style.borderLeft = "4px solid var(--success-color)";
+            bubble.style.backgroundColor = "#e8f8f0";
+            bubble.innerHTML = `<strong>Du:</strong> „${escapeHTML(text)}“`;
+            commentsBox.insertBefore(bubble, commentsBox.firstChild);
+        } else {
+            bubble.innerHTML = `„${escapeHTML(text)}“`;
+            commentsBox.appendChild(bubble);
+        }
+    }
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
+
+    initPoll();
+</script>
+
+</body>
+</html>
