@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lückentext: Anwendung & Kontext</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .instruction {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .quiz-box {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .text-sentence {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 4px;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: #1e293b;
+        }
+
+        /* Styling für das integrierte Dropdown-Menü */
+        .inline-select {
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 6px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: var(--primary-color);
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            margin: 0 5px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .inline-select:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+        }
+
+        /* Zustände nach der Auswahl */
+        .inline-select.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f0;
+            color: #14532d;
+        }
+
+        .inline-select.wrong {
+            border-color: var(--error-color);
+            background-color: #fdedec;
+            color: #781c1c;
+        }
+
+        .inline-select:disabled {
+            cursor: not-allowed;
+            opacity: 1; /* Volle Sichtbarkeit trotz Sperre */
+        }
+
+        .feedback-zone {
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .feedback-message.success { color: var(--success-color); }
+
+        .btn-reset {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn-reset:hover { background-color: #2c3e50; }
+        .btn-reset:active { transform: scale(0.98); }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .text-sentence { font-size: 1.05rem; padding: 15px; line-height: 2; }
+            .inline-select { font-size: 1rem; padding: 4px 8px; margin: 4px 0; }
+            .btn-reset { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Lückentext-Quiz</h2>
+    <p class="instruction">Wähle das jeweils passende Wort aus dem Dropdown-Menü aus.</p>
+
+    <div class="quiz-box" id="lückentext-container">
+        <div class="text-sentence" id="block-0">
+            Wir wollten im Park picknicken, aber es regnet. 
+            <select class="inline-select" data-index="0">
+                </select> 
+            это закон подлости!
+        </div>
+
+        <div class="text-sentence" id="block-1">
+            Das russische Wort 
+            <select class="inline-select" data-index="1"></select> 
+            bedeutet übersetzt „Gesetz der Gemeinheit“ und entspricht dem deutschen Konzept von Murphys Gesetz.
+        </div>
+
+        <div class="text-sentence" id="block-2">
+            Wir nutzen diese Redewendung immer dann, wenn eine Situation im dümmsten Moment unerwartet 
+            <select class="inline-select" data-index="2"></select>.
+        </div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="success-msg">🎉 Fantastisch! Alle Lücken wurden vollkommen richtig ausgefüllt.</div>
+        <button class="btn-reset" id="reset-btn">Neustart</button>
+    </div>
+</div>
+
+<script>
+    // Datenstruktur für alle Lücken
+    const lückenData = [
+        {
+            correct: "Блин",
+            distractors: ["Спасибо", "Пожалуйста"]
+        },
+        {
+            correct: "Закон подлости",
+            distractors: ["Закон природы", "Закон порядка"]
+        },
+        {
+            correct: "schiefgeht",
+            distractors: ["gutgeht", "vergessen wird"]
+        }
+    ];
+
+    const dropdowns = document.querySelectorAll('.inline-select');
+    const successMsg = document.getElementById('success-msg');
+    const resetBtn = document.getElementById('reset-btn');
+
+    function initQuiz() {
+        successMsg.style.display = 'none';
+        
+        dropdowns.forEach(select => {
+            select.className = 'inline-select';
+            select.disabled = false;
+            select.innerHTML = '';
+
+            const dataIndex = parseInt(select.getAttribute('data-index'));
+            const data = lückenData[dataIndex];
+
+            // Erstelle ein Array aus allen Optionen (Richtige + Falsche)
+            const optionsArray = [data.correct, ...data.distractors];
+
+            // Optionen zufällig durchmischen (Fisher-Yates)
+            for (let i = optionsArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [optionsArray[i], optionsArray[j]] = [optionsArray[j], optionsArray[i]];
+            }
+
+            // Standardplatzhalter ganz oben einfügen
+            const placeholder = document.createElement('option');
+            placeholder.text = '[...]';
+            placeholder.value = '';
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            select.appendChild(placeholder);
+
+            // Gemischte Optionen in das Dropdown-Element laden
+            optionsArray.forEach(optText => {
+                const opt = document.createElement('option');
+                opt.text = optText;
+                opt.value = optText;
+                select.appendChild(opt);
+            });
+
+            // Event-Listener für die Auswahl binden
+            select.onchange = () => checkSelection(select, dataIndex);
+        });
+    }
+
+    function checkSelection(selectElement, index) {
+        const selectedValue = selectElement.value;
+        const correctAnswer = lückenData[index].correct;
+
+        if (selectedValue === correctAnswer) {
+            selectElement.className = 'inline-select correct';
+            selectElement.disabled = true; // Sperren, da richtig gelöst
+            checkGlobalStatus();
+        } else {
+            selectElement.className = 'inline-select wrong';
+            
+            // Bei falscher Auswahl blitzt das Feld kurz rot auf und setzt sich dann zurück
+            setTimeout(() => {
+                if (selectElement.className.contains && selectElement.className.contains('wrong') || selectElement.classList.contains('wrong')) {
+                    selectElement.className = 'inline-select';
+                    selectElement.value = ''; // Zurück auf den Platzhalter [...]
+                }
+            }, 600);
+        }
+    }
+
+    // Prüft, ob alle Dropdowns erfolgreich gelöst wurden
+    function checkGlobalStatus() {
+        const allCorrect = Array.from(dropdowns).every(select => select.classList.contains('correct'));
+        if (allCorrect) {
+            successMsg.style.display = 'block';
+        }
+    }
+
+    resetBtn.addEventListener('click', initQuiz);
+
+    // Initialer Start beim Laden der Seite
+    initQuiz();
+</script>
+
+</body>
+</html>
