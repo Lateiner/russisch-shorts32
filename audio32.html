@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio-Szenarien: Reaktionen wählen</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --neutral-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--neutral-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .instruction {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            background-color: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Audio Box */
+        .audio-box {
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .play-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 1.6rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(74, 144, 226, 0.25);
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+            background-color: #357abd;
+        }
+
+        .audio-status {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .fallback-text {
+            font-style: italic;
+            color: #475569;
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            border-left: 3px solid #94a3b8;
+            width: 100%;
+            text-align: left;
+        }
+
+        /* Optionen */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            color: #1e293b;
+            padding: 14px 18px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            border-color: var(--primary-color);
+            background-color: #f0f7ff;
+        }
+
+        .option-btn.correct {
+            background-color: var(--success-color) !important;
+            border-color: var(--success-color) !important;
+            color: white !important;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            color: white !important;
+        }
+
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .option-btn.disabled.correct,
+        .option-btn.disabled.wrong {
+            opacity: 1;
+        }
+
+        /* Feedback & Navigation */
+        .feedback-zone {
+            text-align: center;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-message {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+        .feedback-message.success { color: var(--success-color); }
+        .feedback-message.error { color: var(--error-color); }
+
+        .btn-action {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .btn-action:hover { background-color: #2c3e50; }
+        .btn-action.next-btn { background-color: var(--primary-color); }
+        .btn-action.next-btn:hover { background-color: #357abd; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            h2 { font-size: 1.3rem; }
+            .option-btn { padding: 12px 14px; font-size: 0.95rem; }
+            .btn-action { width: 100%; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Hörverstehen & Anwendung</h2>
+    <p class="instruction">Höre dir die Situation an und wähle die passende Reaktion der Person aus.</p>
+
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <span id="progress-text">Szenario 1 von 5</span>
+    </div>
+
+    <div id="quiz-ui">
+        <div class="audio-box">
+            <button class="play-btn" id="play-audio-btn">▶</button>
+            <div class="audio-status" id="audio-status-text">Audio bereit</div>
+            <div class="fallback-text" id="text-hint"></div>
+        </div>
+
+        <div class="options-container" id="options-block"></div>
+    </div>
+
+    <div class="feedback-zone">
+        <div class="feedback-message" id="feedback-msg"></div>
+        <button class="btn-action" id="action-btn"></button>
+    </div>
+</div>
+
+<script>
+    // Pool mit exakt 5 Audio-Szenarien
+    const scenariosPool = [
+        {
+            audioText: "Я готовился к экзамену, но попался именно тот единственный вопрос, который я пропустил!",
+            translation: "„Ich habe gelernt, aber genau die eine Frage, die ich übersprungen habe, kam in der Prüfung dran!“",
+            choices: [
+                { text: "Это закон подлости.", isCorrect: true, feedback: "Perfekt! Ein klassisches Beispiel für Murphys Gesetz im Schulalltag." },
+                { text: "Большое спасибо!", isCorrect: false, feedback: "Falsch. In dieser Situation gibt es keinen Grund, danke zu sagen." },
+                { text: "Пожалуйста, приятного аппетита.", isCorrect: false, feedback: "Falsch. Das bedeutet 'Guten Appetit'." }
+            ]
+        },
+        {
+            audioText: "Мы пришли в парк на пикник, и прямо сейчас начался сильный ливень!",
+            translation: "„Wir sind im Park zum Picknicken angekommen und genau jetzt hat ein starker Wolkenbruch eingesetzt!“",
+            choices: [
+                { text: "Блин, это закон подлости!", isCorrect: true, feedback: "Richtig! Das Wetter macht im unpassendsten Moment einen Strich durch die Rechnung." },
+                { text: "Здравствуйте, как дела?", isCorrect: false, feedback: "Unpassend. Das ist eine normale Begrüßungsformel." },
+                { text: "Ничего страшного, я не хочу.", isCorrect: false, feedback: "Falsch. Das bedeutet 'Nicht schlimm, ich will nicht'." }
+            ]
+        },
+        {
+            audioText: "Я бежал со всех ног, но автобус уехал прямо передо мной!",
+            translation: "„Ich bin gerannt so schnell ich konnte, aber der Bus ist mir direkt vor der Nase weggefahren!“",
+            choices: [
+                { text: "Опять этот закон подлости.", isCorrect: true, feedback: "Richtig! Das Pech schlägt genau in der entscheidenden Sekunde zu." },
+                { text: "Доброе утро!", isCorrect: false, feedback: "Falsch. Das bedeutet 'Guten Morgen'." },
+                { text: "Мне это очень нравится.", isCorrect: false, feedback: "Falsch. Niemand mag es, den Bus zu verpassen!" }
+            ]
+        },
+        {
+            audioText: "Мне нужно сделать важный звонок, и именно сейчас мой телефон полностью разрядился!",
+            translation: "„Ich muss einen dringenden Anruf machen und genau jetzt ist mein Handy komplett leer gegangen!“",
+            choices: [
+                { text: "Ну конечно, закон подлости.", isCorrect: true, feedback: "Exakt! Technische Pannen im kritischsten Moment sind typisch dafür." },
+                { text: "Поздравляю с днём рождения!", isCorrect: false, feedback: "Falsch. Das ist ein Geburtstagswunsch." },
+                { text: "Извините, где здесь вокзал?", isCorrect: false, feedback: "Falsch. Das ist die Frage nach dem Bahnhof." }
+            ]
+        },
+        {
+            audioText: "Я купил бутерброд, и он упал маслом вниз на ковёр!",
+            translation: "„Ich habe mir ein Butterbrot geschmiert und es ist mit der Butterseite nach unten auf den Teppich gefallen!“",
+            choices: [
+                { text: "Как всегда, закон подлости.", isCorrect: true, feedback: "Richtig! Das herabfallende Butterbrot ist das Urbeispiel für diese Redewendung." },
+                { text: "До свидания!", isCorrect: false, feedback: "Falsch. Das heißt 'Auf Wiedersehen'." },
+                { text: "Рад со всеми познакомиться.", isCorrect: false, feedback: "Falsch. Das bedeutet 'Schön, alle kennenzulernen'." }
+            ]
+        }
+    ];
+
+    let currentScenarios = [];
+    let currentIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    const playBtn = document.getElementById('play-audio-btn');
+    const audioStatusText = document.getElementById('audio-status-text');
+    const textHint = document.getElementById('text-hint');
+    const optionsBlock = document.getElementById('options-block');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const actionBtn = document.getElementById('action-btn');
+    const progressFill = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const quizUi = document.getElementById('quiz-ui');
+
+    let synth = window.speechSynthesis;
+    let russianVoice = null;
+
+    function loadVoices() {
+        if (!synth) return;
+        const voices = synth.getVoices();
+        const ruVoices = voices.filter(v => v.lang.includes('ru') || v.lang.includes('RU'));
+        russianVoice = ruVoices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('dmitry') || v.name.toLowerCase().includes('pavel')) || ruVoices[0];
+    }
+
+    if (synth && synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = loadVoices;
+    }
+
+    function startQuiz() {
+        currentIndex = 0;
+        score = 0;
+        currentScenarios = [...scenariosPool];
+        
+        // Runden mischen
+        for (let i = currentScenarios.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentScenarios[i], currentScenarios[j]] = [currentScenarios[j], currentScenarios[i]];
+        }
+
+        quizUi.style.display = 'block';
+        loadScenario();
+    }
+
+    function loadScenario() {
+        hasAnswered = false;
+        optionsBlock.innerHTML = '';
+        feedbackMsg.style.display = 'none';
+        actionBtn.style.display = 'none';
+        playBtn.innerText = "▶";
+        audioStatusText.innerText = "Audio bereit";
+
+        const total = currentScenarios.length;
+        const percent = (currentIndex / total) * 100;
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `Szenario ${currentIndex + 1} von ${total}`;
+
+        const scenario = currentScenarios[currentIndex];
+        textHint.innerHTML = `<strong>Situation auf Deutsch:</strong><br>${scenario.translation}`;
+
+        // Optionen klonen und mischen
+        const shuffledChoices = [...scenario.choices];
+        for (let i = shuffledChoices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledChoices[i], shuffledChoices[j]] = [shuffledChoices[j], shuffledChoices[i]];
+        }
+
+        // Buttons bauen
+        shuffledChoices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = choice.text;
+            btn.addEventListener('click', () => handleSelection(btn, choice));
+            optionsBlock.appendChild(btn);
+        });
+
+        loadVoices();
+    }
+
+    function playAudio() {
+        if (!synth) return;
+        if (synth.speaking) {
+            synth.cancel();
+            playBtn.innerText = "▶";
+            return;
+        }
+
+        const scenario = currentScenarios[currentIndex];
+        const utterance = new SpeechSynthesisUtterance(scenario.audioText);
+        
+        if (russianVoice) utterance.voice = russianVoice;
+        else utterance.lang = 'ru-RU';
+
+        utterance.pitch = 0.85; // Simuliert tiefere/männliche Tonlage
+        utterance.rate = 0.95;
+
+        utterance.onstart = () => {
+            playBtn.innerText = "🔊";
+            audioStatusText.innerText = "Spiele Audio ab...";
+        };
+        utterance.onend = () => {
+            playBtn.innerText = "▶";
+            audioStatusText.innerText = "Audio bereit";
+        };
+
+        synth.speak(utterance);
+    }
+
+    function handleSelection(selectedBtn, choiceData) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+
+        if (synth && synth.speaking) synth.cancel();
+
+        const allBtns = optionsBlock.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => btn.classList.add('disabled'));
+
+        if (choiceData.isCorrect) {
+            selectedBtn.classList.add('correct');
+            feedbackMsg.innerText = `🎉 Richtig! ${choiceData.feedback}`;
+            feedbackMsg.className = "feedback-message success";
+            score++;
+        } else {
+            selectedBtn.classList.add('wrong');
+            feedbackMsg.innerText = `❌ ${choiceData.feedback}`;
+            feedbackMsg.className = "feedback-message error";
+
+            allBtns.forEach(btn => {
+                const scenario = currentScenarios[currentIndex];
+                const matched = scenario.choices.find(c => c.text === btn.innerText);
+                if (matched && matched.isCorrect) btn.classList.add('correct');
+            });
+        }
+
+        feedbackMsg.style.display = 'block';
+
+        // Navigation festlegen
+        if (currentIndex < currentScenarios.length - 1) {
+            actionBtn.innerText = "Nächstes Szenario";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = () => {
+                currentIndex++;
+                loadScenario();
+            };
+        } else {
+            actionBtn.innerText = "Zur Gesamtauswertung";
+            actionBtn.className = "btn-action next-btn";
+            actionBtn.onclick = showFinalScore;
+        }
+        actionBtn.style.display = 'inline-block';
+    }
+
+    function showFinalScore() {
+        quizUi.style.display = 'none';
+        progressFill.style.width = '100%';
+        progressText.innerText = "Beendet";
+
+        feedbackMsg.className = 'feedback-message success';
+        feedbackMsg.innerHTML = `🏁 Fertig!<br>Du hast <strong>${score} von ${currentScenarios.length}</strong> Szenarien richtig gelöst.`;
+        feedbackMsg.style.display = 'block';
+
+        actionBtn.innerText = "Quiz neustarten";
+        actionBtn.className = "btn-action";
+        actionBtn.onclick = startQuiz;
+    }
+
+    playBtn.addEventListener('click', playAudio);
+    startQuiz();
+</script>
+
+</body>
+</html>
